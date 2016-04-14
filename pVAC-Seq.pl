@@ -96,7 +96,8 @@ else {print "COMPLETED";}
 
 ### Valid NETMHC Allele list ###
 
-my $netmhc_a = `$netmhc_path -A`;
+#JH: netMHC v4.0 uses 'listMHC' rather than '-A' to get the list of known HLA types
+my $netmhc_a = `$netmhc_path -listMHC -tdir /tmp`;
 my @allele_arr = split("\n", $netmhc_a);
 
 @allele = split(/,/,join(',',@allele));
@@ -105,6 +106,8 @@ my @allele_arr = split("\n", $netmhc_a);
 
 
 ### Run NETMHC allele-length combinations ###
+### JH: have to specify temp folder for NetMHC so it doesn't try to write to its install folder (!)
+### JH: Argument '-x outfile' changed to '-xls -xlsfile outfile' in NetMHC v4.0
 foreach my $epl (@epitope_len)
 {
 	foreach my $a (@allele)
@@ -112,8 +115,8 @@ foreach my $epl (@epitope_len)
 		if (grep {$_ eq $a} @allele_arr ) {
 			my $net_out = $sample_name.'.'.$a.'.'.$epl.'.netmhc.xls';
 			print "\n#RUNNING NETMHC ON ALLELE $a AND EPITOPE LENGTH $epl\n";
-			my $netmhc_cmd = '$netmhc_path -a $a -l $epl $output_dir/$fasta_file -x $output_dir/$net_out';
-	 		my $tmp = `$netmhc_path -a $a -l $epl $output_dir/$fasta_file -x $output_dir/$net_out`;
+			my $netmhc_cmd = '$netmhc_path -a $a -l $epl $output_dir/$fasta_file -xls -xlsfile $output_dir/$net_out -tdir /tmp';
+	 		my $tmp = `$netmhc_path -a $a -l $epl $output_dir/$fasta_file -xls -xlsfile $output_dir/$net_out -tdir /tmp`;
 
 		}	
 		else
