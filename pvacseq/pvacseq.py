@@ -14,7 +14,7 @@ def main():
 
     #add subcommands
     variant_sequences_parser = subparsers.add_parser("generate_fasta",
-                                                     help="Generates a variant peptide FASTA file from the TSV input file",
+                                                     help="Generates a variant peptide FASTA file from an annotated VCF",
                                                      add_help=False)
     variant_sequences_parser.set_defaults(func=lib.generate_fasta)
 
