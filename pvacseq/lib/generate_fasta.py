@@ -104,7 +104,7 @@ def main(args_input = sys.argv[1:]):
             consequence_string = transcript['Consequence']
             if consequence_string is None:
                 continue
-            consequences = list(set(consequence.lower() for consequence in consequence_string.split('&')))
+            consequences = {consequence.lower() for consequence in consequence_string.split('&')}
             full_wildtype_sequence = transcript['WildtypeProtein']
 
             if 'missense_variant' in consequences:
