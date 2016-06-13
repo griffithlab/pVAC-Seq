@@ -12,7 +12,7 @@ def main(args_input = sys.argv[1:]):
     parser = argparse.ArgumentParser("pVAC-Seq Main")
 
     parser.add_argument("input",
-                        help="Input TSV File with variants (please provide complete path)"
+                        help="Annotated input VCF with variants (please provide complete path)"
                         )
     parser.add_argument("sample_name",
                         help="Name of Sample; will be used as prefix for output files"
