@@ -2,7 +2,7 @@
 Cancer immunotherapy has gained significant momentum from recent clinical successes of checkpoint blockade inhibition. Massively parallel sequence analysis suggests a connection between mutational load and response to this class of therapy. Methods to identify which tumor-specific mutant peptides (neoantigens) can elicit anti-tumor T cell immunity are needed to improve predictions of checkpoint therapy response and to identify targets for vaccines and adoptive T cell therapies. Here, we provide a cancer immunotherapy pipeline for the identification of **p**ersonalized **V**ariant **A**ntigens by **C**ancer **Seq**uencing (pVAC-Seq) that integrates tumor mutation and expression data (DNA- and RNA-Seq).
 http://www.genomemedicine.com/content/8/1/11
 
-## New in version 2.0.0
+## New in version 2.0.1
 <ul>
 <li>Supports inframe indels and frameshifts.</li>
 <li>Supports VCF as the input file format.</li>
@@ -15,11 +15,13 @@ Jasreet Hundal, Beatriz M. Carreno, Allegra A. Petti, Gerald P. Linette, Obi L. 
 This project is licensed under <a href="http://opensource.org/licenses/NPOSL-3.0">NPOSL-3.0</a>.
 
 ## Installation Instructions
-  Make sure you have `pip` installed.  `pip` is generally included in python distributions, but may need to be upgraded before use.  See these instructions for installing or upgrading pip: https://packaging.python.org/en/latest/installing/#install-pip-setuptools-and-wheel
+pVAC-Seq requires Python 3.5. You can check your installed Python version by running `python -V`. If you don't have Python 3.5 installed, we recommend using <a href="http://conda.pydata.org/docs/py2or3.html">Conda</a> to emulate a Python 3.5 environment.
 
-  After you have pip installed, type the following command on your Terminal(for Mac and Linux users) or the command prompt (for Windows users): `pip install pvacseq`
+Once you have set up your Python 3.5 environment correctly you can use `pip` to install pVAC-Seq. Make sure you have `pip` installed.  `pip` is generally included in python distributions, but may need to be upgraded before use.  See the <a href="https://packaging.python.org/en/latest/installing/#install-pip-setuptools-and-wheel">instructions</a> for installing or upgrading pip. You might need to use `pip3` if you have multiple Python versions installed locally.
 
-  pip will fetch and install pVAC-Seq and its dependencies for you.  After installing, you can run `pvacseq` directly from the Terminal/command prompt
+After you have pip installed, type the following command on your Terminal(for Mac and Linux users) or the command prompt (for Windows users): `pip install pvacseq`.
+
+pip will fetch and install pVAC-Seq and its dependencies for you.  After installing, you can run `pvacseq` directly from the Terminal/command prompt.
 
 ##Prerequisites
 ###<b>VEP</b>
@@ -37,7 +39,7 @@ The input to the pVAC-Seq pipeline is a VEP annotated VCF. In addition to the st
 `--terms SO`<br>
 The `--dir_plugins <VEP_plugins directory>` option may need to be set depending on where the VEP_plugins were installed to. Additional VEP options that might be desired can be found <a href="http://useast.ensembl.org/info/docs/tools/vep/script/vep_options.html">here</a>.<br>
 <b>Example VEP Command</b><br>
-`perl variant_effect_predictor.pl --input-file <input VCF> --format vcf --output_file <output VCF> --vcf --symbol --terms SO --plugin Downstream --plugin Wildtype [--dir_plugins <VEP_plugins directory>]`
+`perl variant_effect_predictor.pl --input_file <input VCF> --format vcf --output_file <output VCF> --vcf --symbol --terms SO --plugin Downstream --plugin Wildtype [--dir_plugins <VEP_plugins directory>]`
 
 ###<b>NetMHC 3.4</b>
 
@@ -65,7 +67,7 @@ Use this command to run the full pVAC-Seq pipeline.  This will internally call t
 
 <b>Optional inputs</b><br>
 <ul>
-<li><code>peptide sequence length</code>: Length of the peptide sequence to use when creating the FASTA. See "Additional Information" for details. 
+<li><code>peptide sequence length</code>: Length of the peptide sequence to use when creating the FASTA. See "Additional Information" for details.
 <li><code>binding threshold</code>: The user can choose to report only epitopes where the mutant allele has IC50 binding scores below this value. By default, pvacseq uses a cutoff of 500.
 <li><code>minimum fold change</code>: This parameter sets the minimum fold change between mutant binding score and wild-type score to use for filtering. The default is 0, which filters no results. Using 1 will require that binding is better to the MT than WT.</li>
 </ul>
