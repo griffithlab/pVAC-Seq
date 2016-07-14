@@ -142,6 +142,7 @@ def main(args_input = sys.argv[1:]):
                                         tsv_writer.writerow(row)
                         iedb_output_files.append(iedb_out)
                         print("Completed")
+    tmp_dir.cleanup()
 
     input_files = []
     tmp_dir.cleanup()
