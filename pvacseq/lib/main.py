@@ -29,7 +29,7 @@ def main(args_input = sys.argv[1:]):
                         help="Name of Sample; will be used as prefix for output files"
                         )
     parser.add_argument("allele",
-                        help="Allele name to predict epitope prediction. Multiple alleles can be specified using a comma-separated list. For a list of available alleles, use: netMHC -A",
+                        help="Allele name to predict epitope prediction. Multiple alleles can be specified using a comma-separated list. For a list of available alleles, use: pvacseq valid_alleles",
                         type=lambda s:[a for a in s.split(',')]
                         )
     parser.add_argument("epitope_length",
@@ -112,16 +112,20 @@ def main(args_input = sys.argv[1:]):
     split_fasta_files = glob.glob("%s*" % tmp_split_fasta_prefix)
     split_reader.close()
 
-    iedb_output_files = []
+    iedb_output_files = {}
     for method in args.prediction_algorithms:
         iedb_method = prediction_method_lookup(method)
         valid_alleles = pvacseq_utils.valid_allele_names_for_method(iedb_method)
         for a in args.allele:
             if a in valid_alleles:
+                if a not in iedb_output_files.keys():
+                    iedb_output_files[a] = {}
                 valid_lengths = pvacseq_utils.valid_lengths_for_allele_and_method(a, iedb_method)
                 for epl in args.epitope_length:
                     if epl in valid_lengths:
                         print("Running IEDB on Allele %s and Epitope Length %s with Method %s" % (a, epl, method))
+                        if epl not in iedb_output_files[a].keys():
+                            iedb_output_files[a][epl] = []
                         iterator = 1
                         split_iedb_output_files = []
                         for split_fasta_file in split_fasta_files:
@@ -147,7 +151,7 @@ def main(args_input = sys.argv[1:]):
                                     tsv_reader = csv.DictReader(split_iedb_out_file, delimiter='\t')
                                     for row in tsv_reader:
                                         tsv_writer.writerow(row)
-                        iedb_output_files.append(iedb_out)
+                        iedb_output_files[a][epl].append(iedb_out)
                         print("Completed")
                     else:
                         print("Epitope Length %s is not valid for Method %s and Allele %s. Skipping." % (epl, method, a))
@@ -156,29 +160,34 @@ def main(args_input = sys.argv[1:]):
 
     tmp_dir.cleanup()
 
-    input_files = []
-    tmp_dir.cleanup()
-
+    parsed_files = []
     for epl in args.epitope_length:
         for a in args.allele:
-            net_parsed = ".".join([args.sample_name, a, str(epl), "parsed.tsv"])
-            print("Parsing NetMHC Output")
+            iedb_parsed = ".".join([args.sample_name, a, str(epl), "parsed.tsv"])
+            print("Parsing IEDB Output for Allele %s and Epitope Length %s" % (a, epl))
             lib.parse_output.main(
                 [
-                    *iedb_output_files,
+                    *iedb_output_files[a][epl],
                     os.path.join(args.output_dir, tsv_file),
                     os.path.join(args.output_dir, fasta_key_file),
-                    os.path.join(args.output_dir, net_parsed)
+                    os.path.join(args.output_dir, iedb_parsed)
                 ]
             )
             print("Completed")
-            input_files.append(os.path.join(args.output_dir, net_parsed))
+            parsed_files.append(os.path.join(args.output_dir, iedb_parsed))
+
+    print("Combining Parsed IEDB Output Files")
+    combined_parsed = "%s.combined.parsed.tsv" % args.sample_name
+    lib.combine_parsed_outputs.main([
+        *parsed_files,
+        os.path.join(args.output_dir, combined_parsed)
+    ])
 
     filt_out = os.path.join(args.output_dir, args.sample_name+"_filtered.tsv")
     print("Running Binding Filters")
     lib.binding_filter.main(
         [
-            *input_files,
+            os.path.join(args.output_dir, combined_parsed),
             filt_out,
             '-c', str(args.minimum_fold_change),
             '-b', str(args.binding_threshold),
@@ -189,7 +198,7 @@ def main(args_input = sys.argv[1:]):
     print("\n")
     print("Done: pvacseq has completed. File", filt_out,
           "contains list of binding-filtered putative neoantigens")
-    print("We recommend appending coverage information and running CoverageFilters.py to filter based on sequencing coverage information")
+    print("We recommend appending coverage information and running `pvacseq coverage_filter` to filter based on sequencing coverage information")
 
 
 def split_file(reader, lines=400):
