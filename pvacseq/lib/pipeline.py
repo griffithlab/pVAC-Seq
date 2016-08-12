@@ -178,7 +178,7 @@ class Pipeline(metaclass=ABCMeta):
         print("Completed")
 
     def binding_filter_out_path(self):
-        return os.path.join(self.output_dir, self.sample_name+"_binding_filtered.tsv")
+        return os.path.join(self.output_dir, self.sample_name+".filtered.binding.tsv")
 
     def binding_filter(self):
         print("Running Binding Filters")
@@ -194,7 +194,7 @@ class Pipeline(metaclass=ABCMeta):
         print("Completed")
 
     def coverage_filter_out_path(self):
-        return os.path.join(self.output_dir, self.sample_name+"_final_filtered.tsv")
+        return os.path.join(self.output_dir, self.sample_name+".filtered.coverage.tsv")
 
     def coverage_filter(self):
         print("Running Coverage Filters")
@@ -206,7 +206,7 @@ class Pipeline(metaclass=ABCMeta):
         print("Completed")
 
     def net_chop_out_path(self):
-        return os.path.join(self.output_dir, self.sample_name+"_filtered.chop.tsv")
+        return os.path.join(self.output_dir, self.sample_name+".filtered.chop.tsv")
 
     def net_chop(self):
         print("Submitting remaining epitopes to NetChop")
@@ -224,7 +224,7 @@ class Pipeline(metaclass=ABCMeta):
         return os.path.join(self.output_dir, self.sample_name+".filtered.final.tsv")
 
     def netmhc_stab_out_path(self):
-        return os.path.join(self.output_dir, self.sample_name+"_filtered.chop.stab.tsv")
+        return os.path.join(self.output_dir, self.sample_name+".filtered.final.stab.tsv")
 
     def call_netmhc_stab(self):
         print("Running NetMHCStabPan")
