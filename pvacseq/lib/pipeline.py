@@ -56,6 +56,7 @@ class Pipeline(metaclass=ABCMeta):
 
     def convert_vcf(self):
         print("Converting VCF to TSV")
+        sys.stdout.flush()
         convert_params = [
             self.input_file,
             self.tsv_file_path(),
@@ -107,9 +108,11 @@ class Pipeline(metaclass=ABCMeta):
             if split_end > entry_count:
                 split_end = entry_count
             print("Splitting FASTA into smaller chunks - Entries %d-%d" % (split_start, split_end))
+
             split_fasta_file_path = "%s_%d-%d"%(self.split_fasta_basename(), split_start, split_end)
             if os.path.exists(split_fasta_file_path):
                 print("Split FASTA file for Entries %d-%d already exists. Skipping." % (split_start, split_end))
+
                 [entry for entry in chunk]
             else:
                 split_writer = open(split_fasta_file_path, mode='w')
@@ -117,9 +120,11 @@ class Pipeline(metaclass=ABCMeta):
                 split_writer.close()
                 print("Completed")
             print("Generating FASTA Key File - Entries %d-%d" % (split_start, split_end))
+
             split_fasta_key_file_path = split_fasta_file_path + '.key'
             if os.path.exists(split_fasta_key_file_path):
                 print("Split FASTA Key File for Entries %d-%d already exists. Skipping." % (split_start, split_end))
+
             else:
                 lib.generate_fasta_key.main([
                     split_fasta_file_path,
@@ -141,6 +146,7 @@ class Pipeline(metaclass=ABCMeta):
 
     def combined_parsed_outputs(self, split_parsed_output_files):
         print("Combining Parsed IEDB Output Files")
+        sys.stdout.flush()
         lib.combine_parsed_outputs.main([
             *split_parsed_output_files,
             self.combined_parsed_path()
@@ -152,6 +158,7 @@ class Pipeline(metaclass=ABCMeta):
 
     def binding_filter(self):
         print("Running Binding Filters")
+        sys.stdout.flush()
         lib.binding_filter.main(
             [
                 self.combined_parsed_path(),
@@ -168,6 +175,7 @@ class Pipeline(metaclass=ABCMeta):
 
     def coverage_filter(self):
         print("Running Coverage Filters")
+        sys.stdout.flush()
         coverage_params = [
             self.binding_filter_out_path(),
             self.coverage_filter_out_path(),
@@ -194,6 +202,7 @@ class Pipeline(metaclass=ABCMeta):
 
     def net_chop(self):
         print("Submitting remaining epitopes to NetChop")
+        sys.stdout.flush()
         lib.net_chop.main([
             self.coverage_filter_out_path(),
             self.net_chop_out_path(),
@@ -209,6 +218,7 @@ class Pipeline(metaclass=ABCMeta):
 
     def call_netmhc_stab(self):
         print("Running NetMHCStabPan")
+        sys.stdout.flush()
         lib.netmhc_stab.main([
             self.net_chop_out_path(),
             self.netmhc_stab_out_path(),
@@ -265,11 +275,11 @@ class Pipeline(metaclass=ABCMeta):
         for symlink in symlinks_to_delete:
             os.unlink(symlink)
 
-        print("\n")
-        print("Done: pvacseq has completed. File", self.final_path(),
-              "contains list of filtered putative neoantigens")
-        print("We recommend appending coverage information and running `pvacseq coverage_filter` to filter based on sequencing coverage information")
 
+        print("\n")
+        print("Done: pvacseq has completed. File %s contains list of filtered putative neoantigens" % self.final_path())
+        print("We recommend appending coverage information and running `pvacseq coverage_filter` to filter based on sequencing coverage information")
+        sys.stdout.flush()
         if self.keep_tmp_files is False:
             shutil.rmtree(self.tmp_dir)
 
@@ -320,6 +330,7 @@ class MHCIPipeline(Pipeline):
                             split_iedb_output_files.append(split_iedb_out)
                             continue
                         print("Running IEDB on Allele %s and Epitope Length %s with Method %s - Entries %s" % (a, epl, method, chunk))
+                        sys.stdout.flush()
                         lib.call_iedb.main([
                             split_fasta_file_path,
                             split_iedb_out,
@@ -351,7 +362,6 @@ class MHCIPipeline(Pipeline):
                         lib.parse_output.main(params)
                         print("Completed")
                         split_parsed_output_files.append(split_parsed_file_path)
-
         return split_parsed_output_files
 
 class MHCIIPipeline(Pipeline):
@@ -395,6 +405,7 @@ class MHCIIPipeline(Pipeline):
                         split_iedb_output_files.append(split_iedb_out)
                         continue
                     print("Running IEDB on Allele %s with Method %s - Entries %s" % (a, method, chunk))
+                    sys.stdout.flush()
                     lib.call_iedb.main([
                         split_fasta_file_path,
                         split_iedb_out,
@@ -438,4 +449,3 @@ def split_file(reader, lines=400):
             tmp = next(reader)
         except StopIteration:
             return
-
