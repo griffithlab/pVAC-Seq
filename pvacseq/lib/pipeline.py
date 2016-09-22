@@ -10,6 +10,7 @@ except ValueError:
 from lib.prediction_class import *
 from lib.convert_vcf import *
 from lib.generate_fasta import *
+from lib.parse_output import *
 import shutil
 
 def status_message(msg):
@@ -381,16 +382,16 @@ class MHCIPipeline(Pipeline):
                     if len(split_iedb_output_files) > 0:
                         status_message("Parsing IEDB Output for Allele %s and Epitope Length %s - Entries %s" % (a, epl, fasta_chunk))
                         split_tsv_file_path = "%s_%s" % (self.tsv_file_path(), tsv_chunk)
-                        params = [
-                            *split_iedb_output_files,
-                            split_tsv_file_path,
-                            split_fasta_key_file_path,
-                            split_parsed_file_path,
-                            '-m', self.top_score_metric,
-                        ]
-                        if self.top_result_per_mutation == True:
-                            params.append('-t')
-                        lib.parse_output.main(params)
+                        params = {
+                            'input_iedb_files'       : split_iedb_output_files,
+                            'input_tsv_file'         : split_tsv_file_path,
+                            'key_file'               : split_fasta_key_file_path,
+                            'output_file'            : split_parsed_file_path,
+                            'top_score_metric'       : self.top_score_metric,
+                            'top_result_per_mutation': self.top_result_per_mutation
+                        }
+                        parse_output_object = ParseOutput(**params)
+                        parse_output_object.execute()
                         status_message("Completed")
                         split_parsed_output_files.append(split_parsed_file_path)
         return split_parsed_output_files
@@ -472,16 +473,16 @@ class MHCIIPipeline(Pipeline):
                 if len(split_iedb_output_files) > 0:
                     status_message("Parsing IEDB Output for Allele %s - Entries %s" % (a, fasta_chunk))
                     split_tsv_file_path = "%s_%s" % (self.tsv_file_path(), tsv_chunk)
-                    params = [
-                        *split_iedb_output_files,
-                        split_tsv_file_path,
-                        split_fasta_key_file_path,
-                        split_parsed_file_path,
-                        '-m', self.top_score_metric,
-                    ]
-                    if self.top_result_per_mutation == True:
-                        params.append('-t')
-                    lib.parse_output.main(params)
+                    params = {
+                        'input_iedb_files'       : split_iedb_output_files,
+                        'input_tsv_file'         : split_tsv_file_path,
+                        'key_file'               : split_fasta_key_file_path,
+                        'output_file'            : split_parsed_file_path,
+                        'top_score_metric'       : self.top_score_metric,
+                        'top_result_per_mutation': self.top_result_per_mutation
+                    }
+                    parse_output_object = ParseOutput(**params)
+                    parse_output_object.execute()
                     status_message("Completed")
                     split_parsed_output_files.append(split_parsed_file_path)
 
