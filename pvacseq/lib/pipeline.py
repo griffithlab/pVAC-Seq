@@ -10,7 +10,7 @@ except ValueError:
 from lib.prediction_class import *
 from lib.convert_vcf import *
 from lib.generate_fasta import *
-from lib.parse_output import *
+from lib.output_parser import *
 import shutil
 
 def status_message(msg):
@@ -390,8 +390,8 @@ class MHCIPipeline(Pipeline):
                             'top_score_metric'       : self.top_score_metric,
                             'top_result_per_mutation': self.top_result_per_mutation
                         }
-                        parse_output_object = ParseOutput(**params)
-                        parse_output_object.execute()
+                        parser = OutputParser(**params)
+                        parser.execute()
                         status_message("Completed")
                         split_parsed_output_files.append(split_parsed_file_path)
         return split_parsed_output_files
@@ -481,8 +481,8 @@ class MHCIIPipeline(Pipeline):
                         'top_score_metric'       : self.top_score_metric,
                         'top_result_per_mutation': self.top_result_per_mutation
                     }
-                    parse_output_object = ParseOutput(**params)
-                    parse_output_object.execute()
+                    parser = OutputParser(**params)
+                    parser.execute()
                     status_message("Completed")
                     split_parsed_output_files.append(split_parsed_file_path)
 
