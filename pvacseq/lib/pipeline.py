@@ -9,7 +9,7 @@ except ValueError:
     import lib
 from lib.prediction_class import *
 from lib.convert_vcf import *
-from lib.generate_fasta import *
+from lib.fasta_generator import *
 from lib.output_parser import *
 import shutil
 
@@ -327,8 +327,8 @@ class MHCIPipeline(Pipeline):
                 generate_fasta_params['downstream_sequence_length'] = self.downstream_sequence_length
             else:
                 generate_fasta_params['downstream_sequence_length'] = None
-            generate_fasta_object = GenerateFasta(**generate_fasta_params)
-            generate_fasta_object.execute()
+            fasta_generator = FastaGenerator(**generate_fasta_params)
+            fasta_generator.execute()
         status_message("Completed")
 
     def call_iedb_and_parse_outputs(self, chunks):
@@ -424,8 +424,8 @@ class MHCIIPipeline(Pipeline):
                 generate_fasta_params['downstream_sequence_length'] = self.downstream_sequence_length
             else:
                 generate_fasta_params['downstream_sequence_length'] = None
-            generate_fasta_object = GenerateFasta(**generate_fasta_params)
-            generate_fasta_object.execute()
+            fasta_generator = FastaGenerator(**generate_fasta_params)
+            fasta_generator.execute()
         status_message("Completed")
 
     def call_iedb_and_parse_outputs(self, chunks):
