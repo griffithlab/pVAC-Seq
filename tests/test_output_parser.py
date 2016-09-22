@@ -4,11 +4,7 @@ import sys
 import tempfile
 from filecmp import cmp
 import py_compile
-try:
-    from pvacseq import lib
-except ValueError:
-    import lib
-from lib.output_parser import *
+from pvacseq.lib.output_parser import *
 
 class OutputParserTests(unittest.TestCase):
     @classmethod

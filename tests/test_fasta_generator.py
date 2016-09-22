@@ -4,11 +4,7 @@ import unittest
 import tempfile
 from filecmp import cmp
 import py_compile
-try:
-    from pvacseq import lib
-except ValueError:
-    import lib
-from lib.fasta_generator import *
+from pvacseq.lib.fasta_generator import *
 
 class FastaGeneratorTests(unittest.TestCase):
     @classmethod
