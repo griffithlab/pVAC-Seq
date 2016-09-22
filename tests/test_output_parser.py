@@ -8,15 +8,15 @@ try:
     from pvacseq import lib
 except ValueError:
     import lib
-from lib.parse_output import *
+from lib.output_parser import *
 
-class ParseOutputTests(unittest.TestCase):
+class OutputParserTests(unittest.TestCase):
     @classmethod
     def setUp(cls):
         base_dir          = os.path.abspath(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
         executable_dir    = os.path.join(base_dir, 'pvacseq', 'lib')
-        cls.executable    = os.path.join(executable_dir, 'parse_output.py')
-        cls.test_data_dir = os.path.join(base_dir, 'tests', 'test_data', 'parse_output')
+        cls.executable    = os.path.join(executable_dir, 'output_parser.py')
+        cls.test_data_dir = os.path.join(base_dir, 'tests', 'test_data', 'output_parser')
 
     def test_source_compiles(self):
         self.assertTrue(py_compile.compile(self.executable))
@@ -35,7 +35,7 @@ class ParseOutputTests(unittest.TestCase):
             'top_result_per_mutation': False,
             'top_score_metric'       : 'median',
         }
-        parser = ParseOutput(**parse_output_params)
+        parser = OutputParser(**parse_output_params)
 
         self.assertFalse(parser.execute())
         expected_output_file  = os.path.join(self.test_data_dir, "output_peptide_sequence_length_21.iedb.parsed.tsv")
@@ -59,7 +59,7 @@ class ParseOutputTests(unittest.TestCase):
             'top_result_per_mutation': False,
             'top_score_metric'       : 'lowest',
         }
-        parser = ParseOutput(**parse_output_params)
+        parser = OutputParser(**parse_output_params)
 
         self.assertFalse(parser.execute())
         expected_output_file  = os.path.join(self.test_data_dir, "output_Test_21.iedb.parsed.tsv")
@@ -83,7 +83,7 @@ class ParseOutputTests(unittest.TestCase):
             'top_result_per_mutation': True,
             'top_score_metric'       : 'median',
         }
-        parser = ParseOutput(**parse_output_params)
+        parser = OutputParser(**parse_output_params)
 
         self.assertFalse(parser.execute())
         expected_output_file  = os.path.join(self.test_data_dir, "output_Test_21.iedb.parsed.top.tsv")
@@ -103,7 +103,7 @@ class ParseOutputTests(unittest.TestCase):
             'top_result_per_mutation': False,
             'top_score_metric'       : 'median',
         }
-        parser = ParseOutput(**parse_output_params)
+        parser = OutputParser(**parse_output_params)
 
         self.assertFalse(parser.execute())
         expected_output_file  = os.path.join(self.test_data_dir, "output_pat27_4_18.iedb.parsed.tsv")
@@ -123,7 +123,7 @@ class ParseOutputTests(unittest.TestCase):
             'top_result_per_mutation': False,
             'top_score_metric'       : 'median',
         }
-        parser = ParseOutput(**parse_output_params)
+        parser = OutputParser(**parse_output_params)
 
         self.assertFalse(parser.execute())
         expected_output_file  = os.path.join(self.test_data_dir, "output_pat126_17.iedb.parsed.tsv")
@@ -143,7 +143,7 @@ class ParseOutputTests(unittest.TestCase):
             'top_result_per_mutation': False,
             'top_score_metric'       : 'median',
         }
-        parser = ParseOutput(**parse_output_params)
+        parser = OutputParser(**parse_output_params)
 
         self.assertFalse(parser.execute())
         expected_output_file  = os.path.join(self.test_data_dir, "output_frameshift_variant_feature_elongation.iedb.parsed.tsv")
@@ -163,7 +163,7 @@ class ParseOutputTests(unittest.TestCase):
             'top_result_per_mutation': False,
             'top_score_metric'       : 'median',
         }
-        parser = ParseOutput(**parse_output_params)
+        parser = OutputParser(**parse_output_params)
 
         self.assertFalse(parser.execute())
         expected_output_file  = os.path.join(self.test_data_dir, "output_frameshift_variant_feature_truncation.iedb.parsed.tsv")
@@ -183,7 +183,7 @@ class ParseOutputTests(unittest.TestCase):
             'top_result_per_mutation': False,
             'top_score_metric'       : 'median',
         }
-        parser = ParseOutput(**parse_output_params)
+        parser = OutputParser(**parse_output_params)
 
         self.assertFalse(parser.execute())
 
@@ -204,7 +204,7 @@ class ParseOutputTests(unittest.TestCase):
             'top_result_per_mutation': False,
             'top_score_metric'       : 'median',
         }
-        parser = ParseOutput(**parse_output_params)
+        parser = OutputParser(**parse_output_params)
 
         self.assertFalse(parser.execute())
         expected_output_file  = os.path.join(self.test_data_dir, "output_inframe_deletion_aa_deletion.iedb.parsed.tsv")
@@ -224,7 +224,7 @@ class ParseOutputTests(unittest.TestCase):
             'top_result_per_mutation': False,
             'top_score_metric'       : 'median',
         }
-        parser = ParseOutput(**parse_output_params)
+        parser = OutputParser(**parse_output_params)
 
         self.assertFalse(parser.execute())
         expected_output_file  = os.path.join(self.test_data_dir, "output_inframe_deletion_aa_replacement.iedb.parsed.tsv")
@@ -244,7 +244,7 @@ class ParseOutputTests(unittest.TestCase):
             'top_result_per_mutation': False,
             'top_score_metric'       : 'median',
         }
-        parser = ParseOutput(**parse_output_params)
+        parser = OutputParser(**parse_output_params)
 
         self.assertFalse(parser.execute())
         expected_output_file  = os.path.join(self.test_data_dir, "output_inframe_insertion_aa_insertion.iedb.parsed.tsv")
@@ -264,7 +264,7 @@ class ParseOutputTests(unittest.TestCase):
             'top_result_per_mutation': False,
             'top_score_metric'       : 'median',
         }
-        parser = ParseOutput(**parse_output_params)
+        parser = OutputParser(**parse_output_params)
 
         self.assertFalse(parser.execute())
         expected_output_file  = os.path.join(self.test_data_dir, "output_inframe_insertion_aa_replacement.iedb.parsed.tsv")
@@ -284,7 +284,7 @@ class ParseOutputTests(unittest.TestCase):
             'top_result_per_mutation': False,
             'top_score_metric'       : 'median',
         }
-        parser = ParseOutput(**parse_output_params)
+        parser = OutputParser(**parse_output_params)
 
         self.assertFalse(parser.execute())
         expected_output_file  = os.path.join(self.test_data_dir, "output_nn_align.iedb.parsed.tsv")
@@ -304,7 +304,7 @@ class ParseOutputTests(unittest.TestCase):
             'top_result_per_mutation': False,
             'top_score_metric'       : 'median',
         }
-        parser = ParseOutput(**parse_output_params)
+        parser = OutputParser(**parse_output_params)
 
         self.assertFalse(parser.execute())
         expected_output_file  = os.path.join(self.test_data_dir, "output_multiple_transcripts_per_alt.iedb.parsed.tsv")
