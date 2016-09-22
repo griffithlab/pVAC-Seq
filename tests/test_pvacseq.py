@@ -8,8 +8,6 @@ import py_compile
 from subprocess import run, PIPE
 from filecmp import cmp
 import yaml
-pvac_dir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
-sys.path.append(pvac_dir)
 import pvacseq.lib
 
 def make_response(data, files, path):
@@ -73,7 +71,7 @@ def generate_class_ii_call(method, allele, path, input_path):
 class PVACTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.pVac_directory =  pvac_dir
+        cls.pVac_directory = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
         cls.test_data_directory = os.path.join(
             cls.pVac_directory,
             'tests',
