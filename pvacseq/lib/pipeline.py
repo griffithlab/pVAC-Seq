@@ -84,7 +84,7 @@ class Pipeline(metaclass=ABCMeta):
             else:
                 convert_params[attribute] = None
 
-        converter = InputFileConverter(**convert_params)
+        converter = VcfConverter(**convert_params)
         converter.execute()
         print("Completed")
 
