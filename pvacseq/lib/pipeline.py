@@ -182,8 +182,10 @@ class Pipeline(metaclass=ABCMeta):
     def generate_fasta(self):
         pass
 
-    def split_fasta_basename(self):
-        return os.path.join(self.tmp_dir, self.sample_name + "_" + str(self.peptide_sequence_length) + ".fa.split")
+    def split_fasta_file_path(self, split_start, split_end):
+        basename    = os.path.join(self.tmp_dir, self.sample_name + "_" + str(self.peptide_sequence_length) + ".fa.split")
+        fasta_chunk = "%d-%d" % (split_start*2-1, split_end*2)
+        return "%s_%s" % (basename, fasta_chunk)
 
     @abstractmethod
     def call_iedb_and_parse_outputs(self, chunks):
@@ -343,7 +345,7 @@ class MHCIPipeline(Pipeline):
         for (split_start, split_end) in chunks:
             fasta_chunk = "%d-%d" % (split_start*2-1, split_end*2)
             split_tsv_file_path       = self.split_tsv_file_path(split_start, split_end)
-            split_fasta_file_path     = "%s_%s" % (self.split_fasta_basename(), fasta_chunk)
+            split_fasta_file_path     = self.split_fasta_file_path(split_start, split_end)
             if os.path.exists(split_fasta_file_path):
                 status_message("Split FASTA file for Entries %s already exists. Skipping." % (fasta_chunk))
                 continue
@@ -367,7 +369,7 @@ class MHCIPipeline(Pipeline):
             fasta_chunk = "%d-%d" % (split_start*2-1, split_end*2)
             for a in self.alleles:
                 for epl in self.epitope_lengths:
-                    split_fasta_file_path = "%s_%s"%(self.split_fasta_basename(), fasta_chunk)
+                    split_fasta_file_path = self.split_fasta_file_path(split_start, split_end)
                     split_iedb_output_files = []
                     status_message("Processing entries for Allele %s and Epitope Length %s - Entries %s" % (a, epl, fasta_chunk))
                     for method in self.prediction_algorithms:
@@ -435,7 +437,7 @@ class MHCIIPipeline(Pipeline):
         for (split_start, split_end) in chunks:
             fasta_chunk = "%d-%d" % (split_start*2-1, split_end*2)
             split_tsv_file_path       = self.split_tsv_file_path(split_start, split_end)
-            split_fasta_file_path     = "%s_%s" % (self.split_fasta_basename(), fasta_chunk)
+            split_fasta_file_path     = self.split_fasta_file_path(split_start, split_end)
             if os.path.exists(split_fasta_file_path):
                 status_message("Split FASTA file for Entries %s already exists. Skipping." % (fasta_chunk))
                 continue
@@ -458,7 +460,7 @@ class MHCIIPipeline(Pipeline):
         for (split_start, split_end) in chunks:
             fasta_chunk = "%d-%d" % (split_start*2-1, split_end*2)
             for a in self.alleles:
-                split_fasta_file_path = "%s_%s"%(self.split_fasta_basename(), fasta_chunk)
+                split_fasta_file_path = self.split_fasta_file_path(split_start, split_end)
                 split_iedb_output_files = []
                 status_message("Processing entries for Allele %s - Entries %s" % (a, fasta_chunk))
                 for method in self.prediction_algorithms:
