@@ -184,8 +184,11 @@ class Pipeline(metaclass=ABCMeta):
 
     def split_fasta_file_path(self, split_start, split_end):
         basename    = os.path.join(self.tmp_dir, self.sample_name + "_" + str(self.peptide_sequence_length) + ".fa.split")
-        fasta_chunk = "%d-%d" % (split_start*2-1, split_end*2)
+        fasta_chunk = self.split_fasta_chunk(split_start, split_end)
         return "%s_%s" % (basename, fasta_chunk)
+
+    def split_fasta_chunk(self, split_start, split_end):
+        return "%d-%d" % (split_start*2-1, split_end*2)
 
     @abstractmethod
     def call_iedb_and_parse_outputs(self, chunks):
@@ -343,7 +346,7 @@ class MHCIPipeline(Pipeline):
     def generate_fasta(self, chunks):
         status_message("Generating Variant Peptide FASTA and Key Files")
         for (split_start, split_end) in chunks:
-            fasta_chunk = "%d-%d" % (split_start*2-1, split_end*2)
+            fasta_chunk = self.split_fasta_chunk(split_start, split_end)
             split_tsv_file_path       = self.split_tsv_file_path(split_start, split_end)
             split_fasta_file_path     = self.split_fasta_file_path(split_start, split_end)
             if os.path.exists(split_fasta_file_path):
@@ -366,7 +369,7 @@ class MHCIPipeline(Pipeline):
     def call_iedb_and_parse_outputs(self, chunks):
         split_parsed_output_files = []
         for (split_start, split_end) in chunks:
-            fasta_chunk = "%d-%d" % (split_start*2-1, split_end*2)
+            fasta_chunk = self.split_fasta_chunk(split_start, split_end)
             for a in self.alleles:
                 for epl in self.epitope_lengths:
                     split_fasta_file_path = self.split_fasta_file_path(split_start, split_end)
@@ -435,7 +438,7 @@ class MHCIIPipeline(Pipeline):
     def generate_fasta(self, chunks):
         status_message("Generating Variant Peptide FASTA and Key Files")
         for (split_start, split_end) in chunks:
-            fasta_chunk = "%d-%d" % (split_start*2-1, split_end*2)
+            fasta_chunk = self.split_fasta_chunk(split_start, split_end)
             split_tsv_file_path       = self.split_tsv_file_path(split_start, split_end)
             split_fasta_file_path     = self.split_fasta_file_path(split_start, split_end)
             if os.path.exists(split_fasta_file_path):
@@ -458,7 +461,7 @@ class MHCIIPipeline(Pipeline):
     def call_iedb_and_parse_outputs(self, chunks):
         split_parsed_output_files = []
         for (split_start, split_end) in chunks:
-            fasta_chunk = "%d-%d" % (split_start*2-1, split_end*2)
+            fasta_chunk = self.split_fasta_chunk(split_start, split_end)
             for a in self.alleles:
                 split_fasta_file_path = self.split_fasta_file_path(split_start, split_end)
                 split_iedb_output_files = []
