@@ -48,7 +48,7 @@ def main(args_input = sys.argv[1:]):
         sys.exit("Epitope length is required for class I binding predictions")
 
     if args.iedb_executable_path is not None:
-        response = run(prediction_class_object.iedb_executable_params(args), stdout=PIPE)
+        response = run(prediction_class_object.iedb_executable_params(args), stdout=PIPE, check=True)
         response_text = response.stdout
         output_mode = 'wb'
     else:
