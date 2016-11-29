@@ -506,7 +506,7 @@ class DefaultOutputParser(OutputParser):
                             tsv_entry = tsv_entries[tsv_index]
                             key = "%s|%s" % (tsv_index, position)
                             if key not in iedb_results:
-                                iedb_results[key] = {}
+                                iedb_results[key]                      = {}
                                 iedb_results[key]['mt_scores']         = {}
                                 iedb_results[key]['mt_epitope_seq']    = epitope
                                 iedb_results[key]['gene_name']         = tsv_entry['gene_name']
@@ -557,7 +557,7 @@ class FusionOutputParser(OutputParser):
                         tsv_entry = tsv_entries[tsv_index]
                         key = "%s|%s" % (tsv_index, position)
                         if key not in iedb_results:
-                            iedb_results[key] = {}
+                            iedb_results[key]                      = {}
                             iedb_results[key]['mt_scores']         = {}
                             iedb_results[key]['wt_scores']         = {}
                             iedb_results[key]['mt_epitope_seq']    = epitope
