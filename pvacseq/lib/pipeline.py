@@ -84,7 +84,7 @@ class Pipeline(metaclass=ABCMeta):
             else:
                 convert_params[attribute] = None
 
-        converter = InputFileConverter(**convert_params)
+        converter = VcfConverter(**convert_params)
         converter.execute()
         print("Completed")
 
@@ -387,7 +387,7 @@ class MHCIPipeline(Pipeline):
                             'top_score_metric'       : self.top_score_metric,
                             'top_result_per_mutation': self.top_result_per_mutation
                         }
-                        parser = OutputParser(**params)
+                        parser = DefaultOutputParser(**params)
                         parser.execute()
                         status_message("Completed")
                         split_parsed_output_files.append(split_parsed_file_path)
@@ -475,7 +475,7 @@ class MHCIIPipeline(Pipeline):
                         'top_score_metric'       : self.top_score_metric,
                         'top_result_per_mutation': self.top_result_per_mutation
                     }
-                    parser = OutputParser(**params)
+                    parser = DefaultOutputParser(**params)
                     parser.execute()
                     status_message("Completed")
                     split_parsed_output_files.append(split_parsed_file_path)
