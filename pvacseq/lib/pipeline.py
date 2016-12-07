@@ -20,6 +20,7 @@ def status_message(msg):
 class Pipeline(metaclass=ABCMeta):
     def __init__(self, **kwargs):
         self.input_file                  = kwargs['input_file']
+        self.input_file_type             = kwargs['input_file_type']
         self.sample_name                 = kwargs['sample_name']
         self.alleles                     = kwargs['alleles']
         self.prediction_algorithms       = kwargs['prediction_algorithms']
@@ -59,8 +60,39 @@ class Pipeline(metaclass=ABCMeta):
         tsv_file = self.sample_name + '.tsv'
         return os.path.join(self.output_dir, tsv_file)
 
+    def converter(self, params):
+        converter_types = {
+            'vcf'  : 'VcfConverter',
+            'bedpe': 'IntegrateConverter',
+        }
+        converter_type = converter_types[self.input_file_type]
+        converter = getattr(sys.modules[__name__], converter_type)
+        return converter(**params)
+
+    def fasta_generator(self, params):
+        generator_types = {
+            'vcf'  : 'FastaGenerator',
+            'bedpe': 'FusionFastaGenerator',
+        }
+        generator_type = generator_types[self.input_file_type]
+        generator = getattr(sys.modules[__name__], generator_type)
+        return generator(**params)
+
+    def output_parser(self, params):
+        parser_types = {
+            'vcf'  : 'DefaultOutputParser',
+            'bedpe': 'FusionOutputParser',
+        }
+        parser_type = parser_types[self.input_file_type]
+        parser = getattr(sys.modules[__name__], parser_type)
+        return parser(**params)
+
+    def tsv_file_path(self):
+        tsv_file = self.sample_name + '.tsv'
+        return os.path.join(self.output_dir, tsv_file)
+
     def convert_vcf(self):
-        status_message("Converting VCF to TSV")
+        status_message("Converting .%s to TSV" % self.input_file_type)
         if os.path.exists(self.tsv_file_path()):
             status_message("TSV file already exists. Skipping.")
             return
@@ -84,7 +116,7 @@ class Pipeline(metaclass=ABCMeta):
             else:
                 convert_params[attribute] = None
 
-        converter = VcfConverter(**convert_params)
+        converter = self.converter(convert_params)
         converter.execute()
         print("Completed")
 
@@ -246,7 +278,10 @@ class Pipeline(metaclass=ABCMeta):
 
         total_row_count = self.tsv_entry_count()
         if total_row_count == 0:
-            sys.exit("The TSV file is empty. Please check that the input VCF contains missense, inframe indel, or frameshift mutations.")
+            if self.input_file_type == 'vcf':
+                sys.exit("The TSV file is empty. Please check that the input VCF contains missense, inframe indel, or frameshift mutations.")
+            elif self.input_file_type == 'bedpe':
+                sys.exit("The TSV file is empty. Please check tha the input bedpe file contains fusion entries.")
         chunks = self.split_tsv_file(total_row_count)
 
         self.generate_fasta(chunks)
@@ -324,7 +359,7 @@ class MHCIPipeline(Pipeline):
                 'output_key_file'           : split_fasta_key_file_path,
                 'downstream_sequence_length': self.downstream_sequence_length,
             }
-            fasta_generator = FastaGenerator(**generate_fasta_params)
+            fasta_generator = self.fasta_generator(generate_fasta_params)
             fasta_generator.execute()
         status_message("Completed")
 
@@ -387,7 +422,7 @@ class MHCIPipeline(Pipeline):
                             'top_score_metric'       : self.top_score_metric,
                             'top_result_per_mutation': self.top_result_per_mutation
                         }
-                        parser = DefaultOutputParser(**params)
+                        parser = self.output_parser(params)
                         parser.execute()
                         status_message("Completed")
                         split_parsed_output_files.append(split_parsed_file_path)
@@ -418,7 +453,7 @@ class MHCIIPipeline(Pipeline):
                 'output_key_file'           : split_fasta_key_file_path,
                 'downstream_sequence_length': self.downstream_sequence_length,
             }
-            fasta_generator = FastaGenerator(**generate_fasta_params)
+            fasta_generator = self.fasta_generator(generate_fasta_params)
             fasta_generator.execute()
         status_message("Completed")
 
@@ -475,7 +510,7 @@ class MHCIIPipeline(Pipeline):
                         'top_score_metric'       : self.top_score_metric,
                         'top_result_per_mutation': self.top_result_per_mutation
                     }
-                    parser = DefaultOutputParser(**params)
+                    parser = self.output_parser(params)
                     parser.execute()
                     status_message("Completed")
                     split_parsed_output_files.append(split_parsed_file_path)
