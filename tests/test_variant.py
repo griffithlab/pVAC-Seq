@@ -83,6 +83,20 @@ class VariantTests(unittest.TestCase):
         self.assertEqual(wt_sequence, None)
         self.assertEqual(mt_sequence, None)
 
+    def test_sequence_is_valid(self):
+        variant = MissenseVariant(
+            peptide_sequence_length      = 21,
+            epitope_length               = 8,
+            protein_position             = "535",
+            wildtype_amino_acid_sequence = "QELEAALHRDDVEFISDLIACLLQGCYQRRDITPQTFHSYLEDIINYRWELEEGKPNPLREASFQDLPLRTRVEILHRLCDYRLDADDVFDLLKGLDADSLRVEPLGEDNSGALYWYFYGTRMYKEDPVQGKSNGELSLSRESEGQKNVSSIPGKTGKRRGRPPKRKKLQEEILLSEKQEENSLASEPQTRHGSQGPGQGTWWLLCQTEEEWRQVTESFRERTSLRERQLYKLLSEDFLPEICNMIAQKGKRPQRTKAELHPRWMSDHLSIKPVKQEETPVLTRIEKQKRKEEEEERQILLAVQKKEQEQMLKEERKRELEEKVKAVEGMCSVRVVWRGACLSTSRPVDRAKRRKLREERAWLLAQGKELPPELSHLDPNSPMREEKKTKDLFELDDDFTAMYK",
+            amino_acid_change            = "R/H",
+        )
+        self.assertTrue(variant.sequence_is_valid("QELEAALHRD"))
+        self.assertFalse(variant.sequence_is_valid("QXLEAALHRD"))
+        self.assertFalse(variant.sequence_is_valid("Q*LEAALHRD"))
+        self.assertTrue(variant.sequence_is_valid("QELEAALH"))
+        self.assertFalse(variant.sequence_is_valid("QELEAAL"))
+
     def test_sequence_containing_asterisk_generates_no_sequences(self):
         variant = InframeDeletionVariant(
             peptide_sequence_length      = 21,

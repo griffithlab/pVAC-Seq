@@ -27,6 +27,19 @@ class Variant(metaclass=ABCMeta):
         else:
             return int((actual_peptide_sequence_length-1) / 2)
 
+    def sequence_is_valid(self, sequence):
+        if '*' in sequence:
+            return 0
+
+        if 'X' in sequence:
+            return 0
+
+        #this check should be done in the IEDB caller
+        if len(sequence) < self.epitope_length:
+            return 0
+
+        return 1
+
 class SingleTranscriptVariant(Variant):
     def __init__(self, **kwargs):
         Variant.__init__(self, **kwargs)
@@ -88,16 +101,10 @@ class InframeVariant(SingleTranscriptVariant):
         mutation_end_position = mutation_start_position + self.wildtype_amino_acid_length
         mutant_subsequence = wildtype_subsequence[:mutation_start_position] + self.mutant_amino_acid + wildtype_subsequence[mutation_end_position:]
 
-        if '*' in wildtype_subsequence or '*' in mutant_subsequence:
+        if self.sequence_is_valid(wildtype_subsequence) and self.sequence_is_valid(mutant_subsequence):
+            return (wildtype_subsequence, mutant_subsequence)
+        else:
             return (None, None)
-
-        if 'X' in wildtype_subsequence or 'X' in mutant_subsequence:
-            return (None, None)
-
-        if len(wildtype_subsequence) < self.epitope_length or len(mutant_subsequence) < self.epitope_length:
-            return (None, None)
-
-        return (wildtype_subsequence, mutant_subsequence)
 
 class InframeDeletionVariant(InframeVariant):
     def determine_wildtype_amino_acid(self):
@@ -187,17 +194,10 @@ class FrameshiftVariant(SingleTranscriptVariant):
             downstream_sequence = downstream_sequence[0:self.downstream_sequence_length]
         mutant_subsequence += downstream_sequence
 
-        if '*' in wildtype_subsequence or '*' in mutant_subsequence:
+        if self.sequence_is_valid(wildtype_subsequence) and self.sequence_is_valid(mutant_subsequence):
+            return (wildtype_subsequence, mutant_subsequence)
+        else:
             return (None, None)
-
-        if 'X' in wildtype_subsequence or 'X' in mutant_subsequence:
-            return (None, None)
-
-        #In the future we should handle this check before calling IEDB
-        if len(wildtype_subsequence) < self.epitope_length or len(mutant_subsequence) < self.epitope_length:
-            return (None, None)
-
-        return (wildtype_subsequence, mutant_subsequence)
 
 class FusionVariant(Variant):
     def determine_fasta_sequences(self):
