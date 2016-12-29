@@ -190,48 +190,37 @@ class FrameshiftVariant(SingleTranscriptVariant):
         return wildtype_subsequence, mutant_subsequence
 
 class FusionVariant(Variant):
+    def __init__(self, **kwargs):
+        Variant.__init__(self, **kwargs)
+        self.position = int(kwargs['fusion_position'])
+        self.sequence = kwargs['fusion_amino_acid_sequence']
+
+    def determine_start_position(self, one_flanking_sequence_length):
+        if self.position < one_flanking_sequence_length:
+            return 0
+        else:
+            return self.position - one_flanking_sequence_length
+
     def determine_fasta_sequences(self):
-        position     = int(self.tsv_entry['fusion_position'])
-        sequence     = self.tsv_entry['fusion_amino_acid_sequence']
-        one_flanking_sequence_length = self.determine_flanking_sequence_length(len(sequence))
-        if position < one_flanking_sequence_length:
-            start_position = 0
+        subsequence = self.get_subsequences()
+        if self.sequence_is_valid(subsequence):
+            return subsequence
         else:
-            start_position = position - one_flanking_sequence_length
+            return None
 
-        if variant_type == 'inframe_fusion':
-            stop_position = position + one_flanking_sequence_length
-            subsequence   = sequence[start_position:stop_position]
-        elif variant_type == 'frameshift_fusion':
-            subsequence = sequence[start_position:]
-            if subsequence.endswith('X'):
-                subsequence = subsequence[:-1]
-        else:
-            return
+class InframeFusionVariant(FusionVariant):
+    def get_subsequences(self):
+        one_flanking_sequence_length = self.determine_flanking_sequence_length(len(self.sequence))
+        start_position = self.determine_start_position(one_flanking_sequence_length)
+        stop_position  = self.position + one_flanking_sequence_length
+        subsequence    = self.sequence[start_position:stop_position]
+        return subsequence
 
-        if '*' in subsequence:
-            return
-
-        if 'X' in subsequence:
-            return
-
-        if len(subsequence) < self.epitope_length:
-            return
-
-        if subsequence in fasta_sequences:
-            fasta_sequences[subsequence].append(self.tsv_entry['index'])
-        else:
-            fasta_sequences[subsequence] = [self.tsv_entry['index']]
-
-        writer                  = open(self.output_file, 'w')
-        key_writer              = open(self.output_key_file, 'w')
-        count                   = 1
-        for (subsequence, keys) in fasta_sequences.items():
-            writer.writelines('>%s\n' % count)
-            writer.writelines('%s\n' % subsequence)
-            yaml.dump({count: keys}, key_writer, default_flow_style=False)
-            count += 1
-
-        writer.close()
-        key_writer.close()
-
+class FrameshiftFusionVariant(FusionVariant):
+    def get_subsequences(self):
+        one_flanking_sequence_length = self.determine_flanking_sequence_length(len(self.sequence))
+        start_position = self.determine_start_position(one_flanking_sequence_length)
+        subsequence = self.sequence[start_position:]
+        if subsequence.endswith('X'):
+            subsequence = subsequence[:-1]
+        return subsequence
