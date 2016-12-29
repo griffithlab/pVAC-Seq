@@ -19,6 +19,58 @@ class VariantTests(unittest.TestCase):
         module = os.path.join(self.executable_dir, 'variant.py')
         self.assertTrue(py_compile.compile(module))
 
+    def test_determine_peptide_sequence_length(self):
+        variant = MissenseVariant(
+            peptide_sequence_length      = 21,
+            epitope_length               = 8,
+            protein_position             = "535",
+            wildtype_amino_acid_sequence = "QELEAALHRDDVEFISDLIACLLQGCYQRRDITPQTFHSYLEDIINYRWELEEGKPNPLREASFQDLPLRTRVEILHRLCDYRLDADDVFDLLKGLDADSLRVEPLGEDNSGALYWYFYGTRMYKEDPVQGKSNGELSLSRESEGQKNVSSIPGKTGKRRGRPPKRKKLQEEILLSEKQEENSLASEPQTRHGSQGPGQGTWWLLCQTEEEWRQVTESFRERTSLRERQLYKLLSEDFLPEICNMIAQKGKRPQRTKAELHPRWMSDHLSIKPVKQEETPVLTRIEKQKRKEEEEERQILLAVQKKEQEQMLKEERKRELEEKVKAVEGMCSVRVVWRGACLSTSRPVDRAKRRKLREERAWLLAQGKELPPELSHLDPNSPMREEKKTKDLFELDDDFTAMYK",
+            amino_acid_change            = "R/H",
+        )
+        self.assertEqual(variant.determine_peptide_sequence_length(20), 20)
+        self.assertEqual(variant.determine_peptide_sequence_length(21), 21)
+        self.assertEqual(variant.determine_peptide_sequence_length(22), 21)
+
+    def test_determine_flanking_sequence_length(self):
+        variant = MissenseVariant(
+            peptide_sequence_length      = 21,
+            epitope_length               = 8,
+            protein_position             = "535",
+            wildtype_amino_acid_sequence = "QELEAALHRDDVEFISDLIACLLQGCYQRRDITPQTFHSYLEDIINYRWELEEGKPNPLREASFQDLPLRTRVEILHRLCDYRLDADDVFDLLKGLDADSLRVEPLGEDNSGALYWYFYGTRMYKEDPVQGKSNGELSLSRESEGQKNVSSIPGKTGKRRGRPPKRKKLQEEILLSEKQEENSLASEPQTRHGSQGPGQGTWWLLCQTEEEWRQVTESFRERTSLRERQLYKLLSEDFLPEICNMIAQKGKRPQRTKAELHPRWMSDHLSIKPVKQEETPVLTRIEKQKRKEEEEERQILLAVQKKEQEQMLKEERKRELEEKVKAVEGMCSVRVVWRGACLSTSRPVDRAKRRKLREERAWLLAQGKELPPELSHLDPNSPMREEKKTKDLFELDDDFTAMYK",
+            amino_acid_change            = "R/H",
+        )
+        self.assertEqual(variant.determine_flanking_sequence_length(22), 10)
+        self.assertEqual(variant.determine_flanking_sequence_length(21), 10)
+        self.assertEqual(variant.determine_flanking_sequence_length(20), 9)
+        self.assertEqual(variant.determine_flanking_sequence_length(19), 9)
+        self.assertEqual(variant.determine_flanking_sequence_length(18), 8)
+
+    def test_position_out_of_bounds(self):
+        variant1 = MissenseVariant(
+            peptide_sequence_length      = 21,
+            epitope_length               = 8,
+            protein_position             = "5",
+            wildtype_amino_acid_sequence = "QELEAALHRD",
+            amino_acid_change            = "R/H",
+        )
+        self.assertFalse(variant1.position_out_of_bounds())
+        variant2 = MissenseVariant(
+            peptide_sequence_length      = 21,
+            epitope_length               = 8,
+            protein_position             = "10",
+            wildtype_amino_acid_sequence = "QELEAALHRD",
+            amino_acid_change            = "R/H",
+        )
+        self.assertFalse(variant2.position_out_of_bounds())
+        variant3 = MissenseVariant(
+            peptide_sequence_length      = 21,
+            epitope_length               = 8,
+            protein_position             = "11",
+            wildtype_amino_acid_sequence = "QELEAALHRD",
+            amino_acid_change            = "R/H",
+        )
+        self.assertTrue(variant3.position_out_of_bounds())
+
     def test_position_out_of_bounds_generates_no_sequences(self):
         variant = MissenseVariant(
             peptide_sequence_length      = 21,
