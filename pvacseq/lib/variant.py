@@ -1,16 +1,14 @@
 import sys
 from abc import ABCMeta
 
-
 class Variant(metaclass=ABCMeta):
     def __init__(self, **kwargs):
-        #This should be a parameter that is passed in to determine_fasta_sequences
-        self.peptide_sequence_length      = kwargs['peptide_sequence_length']
+        self.desired_peptide_sequence_length = kwargs['desired_peptide_sequence_length']
         #This will go away when the check for epitope length is moved to the IEDB caller
-        self.epitope_length               = kwargs['epitope_length']
+        self.epitope_length                  = kwargs['epitope_length']
 
     def determine_peptide_sequence_length(self, full_wildtype_sequence_length):
-        actual_peptide_sequence_length = self.peptide_sequence_length
+        actual_peptide_sequence_length = self.desired_peptide_sequence_length
 
         #If the wildtype sequence is shorter than the desired peptide sequence
         #length we use the wildtype sequence length instead so that the extraction
