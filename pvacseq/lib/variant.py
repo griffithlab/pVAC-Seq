@@ -49,6 +49,17 @@ class SingleTranscriptVariant(Variant):
     def position_out_of_bounds(self):
         return self.position > len(self.wildtype_amino_acid_sequence)-1
 
+    def determine_fasta_sequences(self):
+        if self.position_out_of_bounds():
+            return (None, None)
+
+        wildtype_subsequence, mutant_subsequence = self.get_subsequences()
+
+        if self.sequence_is_valid(wildtype_subsequence) and self.sequence_is_valid(mutant_subsequence):
+            return (wildtype_subsequence, mutant_subsequence)
+        else:
+            return (None, None)
+
 class InframeVariant(SingleTranscriptVariant):
     def __init__(self, **kwargs):
         SingleTranscriptVariant.__init__(self, **kwargs)
@@ -93,18 +104,11 @@ class InframeVariant(SingleTranscriptVariant):
 
         return mutation_position, wildtype_subsequence
 
-    def determine_fasta_sequences(self):
-        if self.position_out_of_bounds():
-            return (None, None)
-
+    def get_subsequences(self):
         mutation_start_position, wildtype_subsequence = self.get_wildtype_subsequence()
         mutation_end_position = mutation_start_position + self.wildtype_amino_acid_length
         mutant_subsequence = wildtype_subsequence[:mutation_start_position] + self.mutant_amino_acid + wildtype_subsequence[mutation_end_position:]
-
-        if self.sequence_is_valid(wildtype_subsequence) and self.sequence_is_valid(mutant_subsequence):
-            return (wildtype_subsequence, mutant_subsequence)
-        else:
-            return (None, None)
+        return (wildtype_subsequence, mutant_subsequence)
 
 class InframeDeletionVariant(InframeVariant):
     def determine_wildtype_amino_acid(self):
@@ -181,23 +185,11 @@ class FrameshiftVariant(SingleTranscriptVariant):
         mutation_subsequence_stop_position = self.position
         wildtype_subsequence = self.wildtype_amino_acid_sequence[start_position:wildtype_subsequence_stop_position]
         mutation_start_subsequence = self.wildtype_amino_acid_sequence[start_position:mutation_subsequence_stop_position]
-        return wildtype_subsequence, mutation_start_subsequence
-
-    def determine_fasta_sequences(self):
-        if self.position_out_of_bounds():
-            return (None, None)
-
-        wildtype_subsequence, mutant_subsequence = self.get_subsequences()
         downstream_sequence = self.downstream_amino_acid_sequence
-
         if self.downstream_sequence_length and len(downstream_sequence) > self.downstream_sequence_length:
             downstream_sequence = downstream_sequence[0:self.downstream_sequence_length]
-        mutant_subsequence += downstream_sequence
-
-        if self.sequence_is_valid(wildtype_subsequence) and self.sequence_is_valid(mutant_subsequence):
-            return (wildtype_subsequence, mutant_subsequence)
-        else:
-            return (None, None)
+        mutant_subsequence = mutation_start_subsequence + downstream_sequence
+        return wildtype_subsequence, mutant_subsequence
 
 class FusionVariant(Variant):
     def determine_fasta_sequences(self):
