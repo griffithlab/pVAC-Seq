@@ -56,10 +56,6 @@ class Pipeline(metaclass=ABCMeta):
         os.makedirs(tmp_dir, exist_ok=True)
         self.tmp_dir = tmp_dir
 
-    def tsv_file_path(self):
-        tsv_file = self.sample_name + '.tsv'
-        return os.path.join(self.output_dir, tsv_file)
-
     def converter(self, params):
         converter_types = {
             'vcf'  : 'VcfConverter',
