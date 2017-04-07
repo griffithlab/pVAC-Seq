@@ -462,6 +462,50 @@ class GenerateFastaTests(unittest.TestCase):
         expected_key_output_file = os.path.join(self.test_data_dir, 'output_dnp.key')
         self.assertTrue(cmp(generate_fasta_key_output_file.name, expected_key_output_file))
 
+    def test_accessory_variants_generate_expected_file(self):
+        peptide_sequence_length        = '21'
+        generate_fasta_input_file      = os.path.join(self.test_data_dir, 'input_somatic_variant_with_nearby_variants.tsv')
+        generate_fasta_accessory_variant_file = os.path.join(self.test_data_dir, 'input_accessory_variants.tsv')
+        generate_fasta_output_file     = tempfile.NamedTemporaryFile()
+        generate_fasta_key_output_file = tempfile.NamedTemporaryFile()
+
+        self.assertFalse(call([
+            self.python,
+            self.executable,
+            generate_fasta_input_file,
+            peptide_sequence_length,
+            self.epitope_length,
+            generate_fasta_output_file.name,
+            generate_fasta_key_output_file.name,
+            '-a', generate_fasta_accessory_variant_file,
+        ], shell=False))
+        expected_output_file = os.path.join(self.test_data_dir, 'output_accessory_variants.fasta')
+        self.assertTrue(cmp(generate_fasta_output_file.name, expected_output_file))
+        expected_key_output_file = os.path.join(self.test_data_dir, 'output_accessory_variants.key')
+        self.assertTrue(cmp(generate_fasta_key_output_file.name, expected_key_output_file))
+
+    def test_accessory_variants_for_inframe_insertion_generate_expected_file(self):
+        peptide_sequence_length        = '21'
+        generate_fasta_input_file      = os.path.join(self.test_data_dir, 'input_inframe_insertion_aa_replacement.tsv')
+        generate_fasta_accessory_variant_file = os.path.join(self.test_data_dir, 'input_accessory_variants.tsv')
+        generate_fasta_output_file     = tempfile.NamedTemporaryFile()
+        generate_fasta_key_output_file = tempfile.NamedTemporaryFile()
+
+        self.assertFalse(call([
+            self.python,
+            self.executable,
+            generate_fasta_input_file,
+            peptide_sequence_length,
+            self.epitope_length,
+            generate_fasta_output_file.name,
+            generate_fasta_key_output_file.name,
+            '-a', generate_fasta_accessory_variant_file,
+        ], shell=False))
+        expected_output_file = os.path.join(self.test_data_dir, 'output_accessory_variants_inframe_insertion.fasta')
+        self.assertTrue(cmp(generate_fasta_output_file.name, expected_output_file))
+        expected_key_output_file = os.path.join(self.test_data_dir, 'output_accessory_variants_inframe_insertion.key')
+        self.assertTrue(cmp(generate_fasta_key_output_file.name, expected_key_output_file))
+
     def test_distance_from_start_works_as_expected(self):
         sequence = 'KKLKILGMPFRNIRSILKMVN'
         position = 5
