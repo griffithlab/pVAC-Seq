@@ -226,7 +226,15 @@ def match_wildtype_and_mutant_entry_for_inframe_indel(result, mt_position, wt_re
         result['match_direction']     = match_direction
         result['wt_epitope_position'] = best_match_position
 
-def match_wildtype_and_mutant_entries(iedb_results, wt_iedb_results):
+def add_mtwnv_iedb_results(iedb_results, mtwnv_iedb_results):
+    for key, result in iedb_results.items():
+        (wt_iedb_result_key, mt_position) = key.split('|', 1)
+        if wt_iedb_result_key in mtwnv_iedb_results and mt_position in mtwnv_iedb_results[wt_iedb_result_key]:
+            mtwnv_result = mtwnv_iedb_results[wt_iedb_result_key][mt_position]
+            result['mtwnv_epitope_seq'] = mtwnv_result['mtwnv_epitope_seq']
+            result['mtwnv_scores'] = mtwnv_result['mtwnv_scores']
+
+def match_wildtype_and_mutant_entries(iedb_results, wt_iedb_results, mtwnv_iedb_results):
     for key in sorted(iedb_results.keys(), key = lambda x: int(x.split('|')[-1])):
         result = iedb_results[key]
         (wt_iedb_result_key, mt_position) = key.split('|', 1)
@@ -245,12 +253,15 @@ def match_wildtype_and_mutant_entries(iedb_results, wt_iedb_results):
             iedb_results_for_wt_iedb_result_key = dict([(key,value) for key, value in iedb_results.items() if key.startswith(wt_iedb_result_key)])
             match_wildtype_and_mutant_entry_for_inframe_indel(result, mt_position, wt_results, previous_result, iedb_results_for_wt_iedb_result_key)
 
+    add_mtwnv_iedb_results(iedb_results, mtwnv_iedb_results)
+
     return iedb_results
 
 def parse_iedb_file(input_iedb_files, tsv_entries, key_file):
     protein_identifiers_from_label = yaml.load(key_file)
     iedb_results = {}
     wt_iedb_results = {}
+    mtwnv_iedb_results = {}
     for input_iedb_file in input_iedb_files:
         iedb_tsv_reader = csv.DictReader(input_iedb_file, delimiter='\t')
         (sample, method, remainder) = os.path.basename(input_iedb_file.name).split(".", 2)
@@ -297,7 +308,16 @@ def parse_iedb_file(input_iedb_files, tsv_entries, key_file):
                     wt_iedb_results[tsv_index][position]['wt_epitope_seq']    = epitope
                     wt_iedb_results[tsv_index][position]['wt_scores'][method] = float(score)
 
-    return match_wildtype_and_mutant_entries(iedb_results, wt_iedb_results)
+                if protein_type == 'MTWNV':
+                    if tsv_index not in mtwnv_iedb_results:
+                        mtwnv_iedb_results[tsv_index] = {}
+                    if position not in mtwnv_iedb_results[tsv_index]:
+                        mtwnv_iedb_results[tsv_index][position] = {}
+                        mtwnv_iedb_results[tsv_index][position]['mtwnv_scores']     = {}
+                    mtwnv_iedb_results[tsv_index][position]['mtwnv_epitope_seq']    = epitope
+                    mtwnv_iedb_results[tsv_index][position]['mtwnv_scores'][method] = float(score)
+
+    return match_wildtype_and_mutant_entries(iedb_results, wt_iedb_results, mtwnv_iedb_results), len(mtwnv_iedb_results.keys())>0
 
 def add_summary_metrics(iedb_results):
     iedb_results_with_metrics = {}
@@ -345,29 +365,39 @@ def pick_top_results(iedb_results, top_score_metric):
 
 def flatten_iedb_results(iedb_results):
     #transform the iedb_results dictionary into a two-dimensional list
-    flattened_iedb_results = list((
-        value['gene_name'],
-        value['amino_acid_change'],
-        value['position'],
-        value['mutation_position'],
-        value['mt_scores'],
-        value['wt_scores'],
-        value['wt_epitope_seq'],
-        value['mt_epitope_seq'],
-        value['tsv_index'],
-        value['allele'],
-        value['peptide_length'],
-        value['best_mt_score'],
-        value['corresponding_wt_score'],
-        value['best_mt_score_method'],
-        value['median_mt_score'],
-        value['median_wt_score'],
-    ) for value in iedb_results.values())
+    flattened_iedb_results = []
+    for value in iedb_results.values():
+        row = []
+        for key in (
+            'gene_name',
+            'amino_acid_change',
+            'position',
+            'mutation_position',
+            'mt_scores',
+            'wt_scores',
+            'mtwnv_scores',
+            'wt_epitope_seq',
+            'mt_epitope_seq',
+            'mtwnv_epitope_seq',
+            'tsv_index',
+            'allele',
+            'peptide_length',
+            'best_mt_score',
+            'corresponding_wt_score',
+            'best_mt_score_method',
+            'median_mt_score',
+            'median_wt_score',
+        ):
+            if key in value.keys():
+                row.append(value[key])
+            else:
+                row.append('NA')
+        flattened_iedb_results.append(row)
 
     return flattened_iedb_results
 
 def process_input_iedb_file(input_iedb_files, tsv_entries, key_file, top_result_per_mutation, top_score_metric):
-    iedb_results              = parse_iedb_file(input_iedb_files, tsv_entries, key_file)
+    (iedb_results, contains_accessory_variants) = parse_iedb_file(input_iedb_files, tsv_entries, key_file)
     iedb_results_with_metrics = add_summary_metrics(iedb_results)
     if top_result_per_mutation == True:
         filtered_iedb_results  = pick_top_results(iedb_results_with_metrics, top_score_metric)
@@ -375,10 +405,10 @@ def process_input_iedb_file(input_iedb_files, tsv_entries, key_file, top_result_
     else:
         flattened_iedb_results = flatten_iedb_results(iedb_results_with_metrics)
 
-    return flattened_iedb_results
+    return flattened_iedb_results, contains_accessory_variants
 
-def base_headers():
-    return[
+def base_headers(contains_accessory_variants):
+    headers = [
         'Chromosome',
         'Start',
         'Stop',
@@ -395,6 +425,10 @@ def base_headers():
         'Sub-peptide Position',
         'Mutation Position',
         'MT Epitope Seq',
+    ]
+    if contains_accessory_variants:
+        headers.append('MTWNV Epitope Seq')
+    headers.extend([
         'WT Epitope Seq',
         'Best MT Score Method',
         'Best MT Score',
@@ -411,14 +445,17 @@ def base_headers():
         'Median MT Score',
         'Median WT Score',
         'Median Fold Change',
-    ]
+    ])
+    return headers
 
-def output_headers(methods, sample_name):
-    headers = base_headers()
+def output_headers(methods, sample_name, contains_accessory_variants):
+    headers = base_headers(contains_accessory_variants)
     for method in methods:
         pretty_method = PredictionClass.prediction_class_name_for_iedb_prediction_method(method)
         headers.append("%s WT Score" % pretty_method)
         headers.append("%s MT Score" % pretty_method)
+        if contains_accessory_variants:
+            headers.append("%s MTWNV Score" % pretty_method)
     if sample_name:
         headers.append("Sample Name")
 
@@ -451,14 +488,15 @@ def main(args_input = sys.argv[1:]):
     parser.add_argument('-s', '--sample-name', help='Sample name')
     args = parser.parse_args(args_input)
 
+    tsv_entries  = parse_input_tsv_file(args.input_tsv_file)
+    (iedb_results, contains_accessory_variants) = process_input_iedb_file(args.input_iedb_files, tsv_entries, args.key_file, args.top_result_per_mutation, args.top_score_metric)
+
     methods = determine_prediction_methods(args.input_iedb_files)
     tmp_output_file = args.output_file + '.tmp'
     tmp_output_filehandle = open(tmp_output_file, 'w')
-    tsv_writer = csv.DictWriter(tmp_output_filehandle, delimiter='\t', fieldnames=output_headers(methods, args.sample_name))
+    tsv_writer = csv.DictWriter(tmp_output_filehandle, delimiter='\t', fieldnames=output_headers(methods, args.sample_name, contains_accessory_variants))
     tsv_writer.writeheader()
 
-    tsv_entries  = parse_input_tsv_file(args.input_tsv_file)
-    iedb_results = process_input_iedb_file(args.input_iedb_files, tsv_entries, args.key_file, args.top_result_per_mutation, args.top_score_metric)
     for (
         gene_name,
         variant_aa,
@@ -466,8 +504,10 @@ def main(args_input = sys.argv[1:]):
         mutation_position,
         mt_scores,
         wt_scores,
+        mtwnv_scores,
         wt_epitope_seq,
         mt_epitope_seq,
+        mtwnv_epitope_seq,
         tsv_index, allele,
         peptide_length,
         best_mt_score,
@@ -522,6 +562,13 @@ def main(args_input = sys.argv[1:]):
                     row["%s MT Score" % pretty_method] = mt_scores[method]
                 else:
                     row["%s MT Score" % pretty_method] = 'NA'
+                if contains_accessory_variants:
+                    if mtwnv_scores != 'NA' and method in mtwnv_scores:
+                        row["%s MTWNV Score" % pretty_method] = mtwnv_scores[method]
+                    else:
+                        row["%s MTWNV Score" % pretty_method] = 'NA'
+            if contains_accessory_variants:
+                row['MTWNV Epitope Seq'] = mtwnv_epitope_seq
             if 'gene_expression' in tsv_entry:
                 row['Gene Expression'] = tsv_entry['gene_expression']
             if 'transcript_expression' in tsv_entry:
