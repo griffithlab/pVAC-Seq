@@ -76,11 +76,14 @@ def get_frameshift_subsequences(position, full_wildtype_sequence, peptide_sequen
     mutation_start_subsequence = full_wildtype_sequence[start_position:mutation_subsequence_stop_position]
     return wildtype_subsequence, mutation_start_subsequence
 
-def add_nearby_variants(accessory_variant_file, somatic_variant_index, wildtype_subsequence, mutation_position, original_position):
+def add_nearby_variants(accessory_variant_file, somatic_variant_index, wildtype_subsequence, mutation_position, original_position, germline_variants_only):
     mutation_offset = original_position - mutation_position
+    accessory_variant_file.seek(0)
     tsvin           = csv.DictReader(accessory_variant_file, delimiter='\t')
     wildtype_subsequence_with_nearby_variants = wildtype_subsequence
     for line in tsvin:
+        if germline_variants_only and line['type'] == 'somatic':
+            continue
         if somatic_variant_index == line['main_somatic_variant']:
             nearby_variant_position = int(line['protein_position']) - 1 - mutation_offset
             nearby_variant_wildtype_amino_acid, nearby_variant_mutant_amino_acid = line['amino_acid_change'].split('/')
@@ -142,6 +145,7 @@ def main(args_input = sys.argv[1:]):
             continue
 
         mutant_subsequence_with_nearby_variants = None
+        wildtype_subsequence_with_germline_variants = None
         if variant_type == 'FS':
             wildtype_subsequence, left_flanking_subsequence = get_frameshift_subsequences(position, full_wildtype_sequence, peptide_sequence_length, line)
             downstream_sequence = line['downstream_amino_acid_sequence']
@@ -150,14 +154,18 @@ def main(args_input = sys.argv[1:]):
                 downstream_sequence = downstream_sequence[0:args.downstream_sequence_length]
             mutant_subsequence = left_flanking_subsequence + downstream_sequence
             if args.accessory_variant_file is not None:
-                left_flanking_subsequence_with_nearby_variants = add_nearby_variants(args.accessory_variant_file, line['index'], left_flanking_subsequence, mutation_start_position, position)
+                wildtype_subsequence_with_germline_variants = add_nearby_variants(args.accessory_variant_file, line['index'], wildtype_subsequence, mutation_start_position, position, True)
+                left_flanking_subsequence_with_nearby_variants = add_nearby_variants(args.accessory_variant_file, line['index'], left_flanking_subsequence, mutation_start_position, position, False)
+                #The caveat here is that if a nearby variant is in the downstream sequence, the protein sequence would be further altered, which we aren't taking into account.
+                #we would need to recalculate the downstream protein sequence taking all downstream variants into account.
                 mutant_subsequence_with_nearby_variants = left_flanking_subsequence_with_nearby_variants + downstream_sequence
         else:
             mutation_start_position, wildtype_subsequence = get_wildtype_subsequence(position, full_wildtype_sequence, wildtype_amino_acid_length, peptide_sequence_length, line)
             mutation_end_position = mutation_start_position + wildtype_amino_acid_length
             mutant_subsequence = wildtype_subsequence[:mutation_start_position] + mutant_amino_acid + wildtype_subsequence[mutation_end_position:]
             if args.accessory_variant_file is not None:
-                wildtype_subsequence_with_nearby_variants = add_nearby_variants(args.accessory_variant_file, line['index'], wildtype_subsequence, mutation_start_position, position)
+                wildtype_subsequence_with_germline_variants = add_nearby_variants(args.accessory_variant_file, line['index'], wildtype_subsequence, mutation_start_position, position, True)
+                wildtype_subsequence_with_nearby_variants = add_nearby_variants(args.accessory_variant_file, line['index'], wildtype_subsequence, mutation_start_position, position, False)
                 mutant_subsequence_with_nearby_variants = wildtype_subsequence_with_nearby_variants[:mutation_start_position] + mutant_amino_acid + wildtype_subsequence_with_nearby_variants[mutation_end_position:]
 
         if '*' in wildtype_subsequence or '*' in mutant_subsequence:
@@ -170,19 +178,14 @@ def main(args_input = sys.argv[1:]):
             continue
 
         variant_id = line['index']
-        for designation, subsequence in zip(['WT', 'MT'], [wildtype_subsequence, mutant_subsequence]):
+        for designation, subsequence in zip(['WT', 'MT', 'MTWNV', 'WTWGV'], [wildtype_subsequence, mutant_subsequence, mutant_subsequence_with_nearby_variants, wildtype_subsequence_with_germline_variants]):
+            if subsequence is None:
+                continue
             key = '%s.%s' % (designation, variant_id)
             if subsequence in fasta_sequences:
                 fasta_sequences[subsequence].append(key)
             else:
                 fasta_sequences[subsequence] = [key]
-
-        if mutant_subsequence_with_nearby_variants is not None:
-            key = '%s.%s' % ('MTWNV', variant_id)
-            if mutant_subsequence_with_nearby_variants in fasta_sequences:
-                fasta_sequences[mutant_subsequence_with_nearby_variants].append(key)
-            else:
-                fasta_sequences[mutant_subsequence_with_nearby_variants] = [key]
 
     count = 1
     for (subsequence, keys) in fasta_sequences.items():
