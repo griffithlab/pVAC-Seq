@@ -340,3 +340,21 @@ class ParseOutputTests(unittest.TestCase):
 
         expected_output_file  = os.path.join(self.test_data_dir, "output_accessory_variants_inframe_insertion.iedb.parsed.tsv")
         self.assertTrue(compare(parse_output_output_file.name, expected_output_file))
+
+    def test_parse_output_runs_and_produces_expected_output_for_missense_mutation_with_accessory_variants(self):
+        parse_output_input_iedb_file = os.path.join(self.test_data_dir, "input_accessory_variants.ann.HLA-A*01:01.9.tsv")
+        parse_output_input_tsv_file = os.path.join(self.test_data_dir, "input_accessory_variants.tsv")
+        parse_output_key_file = os.path.join(self.test_data_dir, "input_accessory_variants.key")
+        parse_output_output_file = tempfile.NamedTemporaryFile()
+
+        self.assertFalse(call([
+            self.python,
+            self.executable,
+            parse_output_input_iedb_file,
+            parse_output_input_tsv_file,
+            parse_output_key_file,
+            parse_output_output_file.name,
+        ], shell=False))
+
+        expected_output_file  = os.path.join(self.test_data_dir, "output_accessory_variants.iedb.parsed.tsv")
+        self.assertTrue(compare(parse_output_output_file.name, expected_output_file))

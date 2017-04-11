@@ -62,6 +62,7 @@ def match_wildtype_and_mutant_entry_for_missense(result, mt_position, wt_results
     mt_epitope_seq = result['mt_epitope_seq']
     wt_result      = wt_results[match_position]
     wt_epitope_seq = wt_result['wt_epitope_seq']
+    result['wt_epitope_position'] = match_position
     total_matches  = determine_total_matches(mt_epitope_seq, wt_epitope_seq)
     if total_matches >= min_match_count(int(result['peptide_length'])):
         result['wt_epitope_seq'] = wt_epitope_seq
@@ -91,6 +92,7 @@ def match_wildtype_and_mutant_entry_for_frameshift(result, mt_position, wt_resul
     if match_position not in wt_results:
         result['wt_epitope_seq'] = 'NA'
         result['wt_scores']      = dict.fromkeys(result['mt_scores'].keys(), 'NA')
+        result['wt_epitope_position'] = 'NA'
         if previous_result['mutation_position'] == 'NA':
             result['mutation_position'] = 'NA'
         elif previous_result['mutation_position'] > 0:
@@ -107,6 +109,7 @@ def match_wildtype_and_mutant_entry_for_frameshift(result, mt_position, wt_resul
         result['wt_epitope_seq']    = wt_result['wt_epitope_seq']
         result['wt_scores']         = wt_result['wt_scores']
         result['mutation_position'] = 'NA'
+        result['wt_epitope_position'] = 'NA'
     else:
         #Determine how many amino acids are the same between the MT epitope and its matching WT epitope
         total_matches = determine_total_matches(mt_epitope_seq, wt_epitope_seq)
@@ -125,6 +128,7 @@ def match_wildtype_and_mutant_entry_for_frameshift(result, mt_position, wt_resul
             #The true mutation position is to the left of the current MT eptiope
             mutation_position = 0
         result['mutation_position'] = mutation_position
+        result['wt_epitope_position'] = match_position
 
 def match_wildtype_and_mutant_entry_for_inframe_indel(result, mt_position, wt_results, previous_result, iedb_results_for_wt_iedb_result_key):
     #If the previous WT epitope was matched "from the right" we can just use that position to infer the mutation position and match direction
@@ -228,13 +232,22 @@ def match_wildtype_and_mutant_entry_for_inframe_indel(result, mt_position, wt_re
 
 def add_mtwnv_iedb_results(iedb_results, mtwnv_iedb_results):
     for key, result in iedb_results.items():
-        (wt_iedb_result_key, mt_position) = key.split('|', 1)
-        if wt_iedb_result_key in mtwnv_iedb_results and mt_position in mtwnv_iedb_results[wt_iedb_result_key]:
-            mtwnv_result = mtwnv_iedb_results[wt_iedb_result_key][mt_position]
+        (mtwnv_iedb_result_key, mt_position) = key.split('|', 1)
+        if mtwnv_iedb_result_key in mtwnv_iedb_results and mt_position in mtwnv_iedb_results[mtwnv_iedb_result_key]:
+            mtwnv_result = mtwnv_iedb_results[mtwnv_iedb_result_key][mt_position]
             result['mtwnv_epitope_seq'] = mtwnv_result['mtwnv_epitope_seq']
             result['mtwnv_scores'] = mtwnv_result['mtwnv_scores']
 
-def match_wildtype_and_mutant_entries(iedb_results, wt_iedb_results, mtwnv_iedb_results):
+def add_wtwgv_iedb_results(iedb_results, wtwgv_iedb_results):
+    for key, result in iedb_results.items():
+        (wtwgv_iedb_result_key, mt_position) = key.split('|', 1)
+        wt_position = result['wt_epitope_position']
+        if wtwgv_iedb_result_key in wtwgv_iedb_results and wt_position in wtwgv_iedb_results[wtwgv_iedb_result_key]:
+            wtwgv_result = wtwgv_iedb_results[wtwgv_iedb_result_key][wt_position]
+            result['wtwgv_epitope_seq'] = wtwgv_result['wtwgv_epitope_seq']
+            result['wtwgv_scores'] = wtwgv_result['wtwgv_scores']
+
+def match_wildtype_and_mutant_entries(iedb_results, wt_iedb_results, mtwnv_iedb_results, wtwgv_iedb_results):
     for key in sorted(iedb_results.keys(), key = lambda x: int(x.split('|')[-1])):
         result = iedb_results[key]
         (wt_iedb_result_key, mt_position) = key.split('|', 1)
@@ -254,6 +267,7 @@ def match_wildtype_and_mutant_entries(iedb_results, wt_iedb_results, mtwnv_iedb_
             match_wildtype_and_mutant_entry_for_inframe_indel(result, mt_position, wt_results, previous_result, iedb_results_for_wt_iedb_result_key)
 
     add_mtwnv_iedb_results(iedb_results, mtwnv_iedb_results)
+    add_wtwgv_iedb_results(iedb_results, wtwgv_iedb_results)
 
     return iedb_results
 
@@ -262,6 +276,7 @@ def parse_iedb_file(input_iedb_files, tsv_entries, key_file):
     iedb_results = {}
     wt_iedb_results = {}
     mtwnv_iedb_results = {}
+    wtwgv_iedb_results = {}
     for input_iedb_file in input_iedb_files:
         iedb_tsv_reader = csv.DictReader(input_iedb_file, delimiter='\t')
         (sample, method, remainder) = os.path.basename(input_iedb_file.name).split(".", 2)
@@ -317,7 +332,16 @@ def parse_iedb_file(input_iedb_files, tsv_entries, key_file):
                     mtwnv_iedb_results[tsv_index][position]['mtwnv_epitope_seq']    = epitope
                     mtwnv_iedb_results[tsv_index][position]['mtwnv_scores'][method] = float(score)
 
-    return match_wildtype_and_mutant_entries(iedb_results, wt_iedb_results, mtwnv_iedb_results), len(mtwnv_iedb_results.keys())>0
+                if protein_type == 'WTWGV':
+                    if tsv_index not in wtwgv_iedb_results:
+                        wtwgv_iedb_results[tsv_index] = {}
+                    if position not in wtwgv_iedb_results[tsv_index]:
+                        wtwgv_iedb_results[tsv_index][position] = {}
+                        wtwgv_iedb_results[tsv_index][position]['wtwgv_scores']     = {}
+                    wtwgv_iedb_results[tsv_index][position]['wtwgv_epitope_seq']    = epitope
+                    wtwgv_iedb_results[tsv_index][position]['wtwgv_scores'][method] = float(score)
+
+    return match_wildtype_and_mutant_entries(iedb_results, wt_iedb_results, mtwnv_iedb_results, wtwgv_iedb_results), len(mtwnv_iedb_results.keys())>0 or len(wtwgv_iedb_results.keys())>0
 
 def add_summary_metrics(iedb_results):
     iedb_results_with_metrics = {}
@@ -376,7 +400,9 @@ def flatten_iedb_results(iedb_results):
             'mt_scores',
             'wt_scores',
             'mtwnv_scores',
+            'wtwgv_scores',
             'wt_epitope_seq',
+            'wtwgv_epitope_seq',
             'mt_epitope_seq',
             'mtwnv_epitope_seq',
             'tsv_index',
@@ -428,8 +454,10 @@ def base_headers(contains_accessory_variants):
     ]
     if contains_accessory_variants:
         headers.append('MTWNV Epitope Seq')
+    headers.append('WT Epitope Seq')
+    if contains_accessory_variants:
+        headers.append('WTWGV Epitope Seq')
     headers.extend([
-        'WT Epitope Seq',
         'Best MT Score Method',
         'Best MT Score',
         'Corresponding WT Score',
@@ -455,6 +483,7 @@ def output_headers(methods, sample_name, contains_accessory_variants):
         headers.append("%s WT Score" % pretty_method)
         headers.append("%s MT Score" % pretty_method)
         if contains_accessory_variants:
+            headers.append("%s WTWGV Score" % pretty_method)
             headers.append("%s MTWNV Score" % pretty_method)
     if sample_name:
         headers.append("Sample Name")
@@ -505,10 +534,13 @@ def main(args_input = sys.argv[1:]):
         mt_scores,
         wt_scores,
         mtwnv_scores,
+        wtwgv_scores,
         wt_epitope_seq,
+        wtwgv_epitope_seq,
         mt_epitope_seq,
         mtwnv_epitope_seq,
-        tsv_index, allele,
+        tsv_index,
+        allele,
         peptide_length,
         best_mt_score,
         corresponding_wt_score,
@@ -563,12 +595,23 @@ def main(args_input = sys.argv[1:]):
                 else:
                     row["%s MT Score" % pretty_method] = 'NA'
                 if contains_accessory_variants:
-                    if mtwnv_scores != 'NA' and method in mtwnv_scores:
+                    if mtwnv_scores != 'NA' and method in mtwnv_scores and mtwnv_epitope_seq != mt_epitope_seq:
                         row["%s MTWNV Score" % pretty_method] = mtwnv_scores[method]
                     else:
                         row["%s MTWNV Score" % pretty_method] = 'NA'
+                    if wtwgv_scores != 'NA' and method in wtwgv_scores and wtwgv_epitope_seq != wt_epitope_seq:
+                        row["%s WTWGV Score" % pretty_method] = wtwgv_scores[method]
+                    else:
+                        row["%s WTWGV Score" % pretty_method] = 'NA'
             if contains_accessory_variants:
-                row['MTWNV Epitope Seq'] = mtwnv_epitope_seq
+                if mtwnv_epitope_seq == mt_epitope_seq:
+                    row['MTWNV Epitope Seq'] = 'NA'
+                else:
+                    row['MTWNV Epitope Seq'] = mtwnv_epitope_seq
+                if wtwgv_epitope_seq == wt_epitope_seq:
+                    row['WTWGV Epitope Seq'] = 'NA'
+                else:
+                    row['WTWGV Epitope Seq'] = wtwgv_epitope_seq
             if 'gene_expression' in tsv_entry:
                 row['Gene Expression'] = tsv_entry['gene_expression']
             if 'transcript_expression' in tsv_entry:
