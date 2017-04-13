@@ -86,6 +86,8 @@ def add_nearby_variants(accessory_variant_file, somatic_variant_index, wildtype_
             continue
         if somatic_variant_index == line['main_somatic_variant']:
             nearby_variant_position = int(line['protein_position']) - 1 - mutation_offset
+            if nearby_variant_position <= 0 or nearby_variant_position >= len(wildtype_subsequence):
+                continue
             nearby_variant_wildtype_amino_acid, nearby_variant_mutant_amino_acid = line['amino_acid_change'].split('/')
             if len(nearby_variant_wildtype_amino_acid) != len(nearby_variant_mutant_amino_acid):
                 print("Nearby variant is not a missense mutation. Skipping.")
