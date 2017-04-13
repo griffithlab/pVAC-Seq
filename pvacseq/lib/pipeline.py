@@ -36,6 +36,7 @@ class Pipeline(metaclass=ABCMeta):
         self.tdna_indels_coverage_file   = kwargs['tdna_indels_coverage_file']
         self.trna_snvs_coverage_file     = kwargs['trna_snvs_coverage_file']
         self.trna_indels_coverage_file   = kwargs['trna_indels_coverage_file']
+        self.accessory_variants_file     = kwargs['accessory_variants_file']
         self.net_chop_method             = kwargs['net_chop_method']
         self.net_chop_threshold          = kwargs['net_chop_threshold']
         self.netmhc_stab                 = kwargs['netmhc_stab']
@@ -329,6 +330,8 @@ class MHCIPipeline(Pipeline):
             ]
             if self.downstream_sequence_length:
                 generate_fasta_params.extend(['-d', self.downstream_sequence_length,])
+            if self.accessory_variants_file:
+                generate_fasta_params.extend(['-a', self.accessory_variants_file])
             lib.generate_fasta.main(generate_fasta_params)
         status_message("Completed")
 
@@ -434,6 +437,8 @@ class MHCIIPipeline(Pipeline):
             ]
             if self.downstream_sequence_length:
                 generate_fasta_params.extend(['-d', self.downstream_sequence_length,])
+            if self.accessory_variants_file:
+                generate_fasta_params.extend(['-a', self.accessory_variants_file])
             lib.generate_fasta.main(generate_fasta_params)
         status_message("Completed")
 

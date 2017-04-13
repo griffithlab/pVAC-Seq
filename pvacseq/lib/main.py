@@ -80,6 +80,10 @@ def define_parser():
              + "For an example of this yaml file run `pvacseq config_files additional_input_file_list`."
     )
     parser.add_argument(
+        "--accessory-variants-file",
+        help='Input list of germline and other somatic variants that are '
+            + 'in range of a given somatic variant')
+    parser.add_argument(
         '--net-chop-method',
         choices=lib.net_chop.methods,
         default=None,
@@ -243,6 +247,7 @@ def main(args_input = sys.argv[1:]):
         'sample_name'               : args.sample_name,
         'top_result_per_mutation'   : args.top_result_per_mutation,
         'top_score_metric'          : args.top_score_metric,
+        'accessory_variants_file'   : args.accessory_variants_file,
         'binding_threshold'         : args.binding_threshold,
         'minimum_fold_change'       : args.minimum_fold_change,
         'net_chop_method'           : args.net_chop_method,
