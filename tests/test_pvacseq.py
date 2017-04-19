@@ -104,16 +104,17 @@ class PVACTests(unittest.TestCase):
             "pvacseq.py"
             )
         usage_search = re.compile(r"usage: ")
-        for command in [
-            "binding_filter",
-            "coverage_filter",
-            "run",
-            "generate_protein_fasta",
-            "install_vep_plugin",
-            "download_example_data",
-            "valid_alleles",
-            "config_files",
-            ]:
+        result = run([sys.executable, pvac_script_path, '-h'], stdout=PIPE)
+        self.assertFalse(result.returncode)
+        command_list = [
+            re.sub(r'\s', '', command) for command in
+            re.search(
+                r"arguments:.*{(.+)}",
+                result.stdout.decode(),
+                re.S
+            ).group(1).split(',')
+        ]
+        for command in command_list:
             result = run([
                 sys.executable,
                 pvac_script_path,

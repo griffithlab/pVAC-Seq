@@ -5,7 +5,7 @@ import csv
 
 try:
     from .. import lib
-except ValueError:
+except (ImportError, SystemError, ValueError):
     import lib
 from lib.prediction_class import *
 from lib.input_file_converter import *
