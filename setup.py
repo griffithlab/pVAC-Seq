@@ -2,11 +2,11 @@ from setuptools import setup
 import os
 
 import sys
-if sys.version_info < (3,5):
-    print("This python version is not supported:")
-    print(sys.version)
-    print("pVAC-Seq requires python 3.5 or greater")
-    sys.exit(1)
+# if sys.version_info < (3,5):
+#     print("This python version is not supported:")
+#     print(sys.version)
+#     print("pVAC-Seq requires python 3.5 or greater")
+#     sys.exit(1)
 
 data_files = []
 for dirpath, dirnames, filenames in os.walk("pvacseq/example_data"):
