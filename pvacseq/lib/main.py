@@ -55,7 +55,7 @@ def define_parser():
         "-e", "--epitope-length", type=lambda s:[int(epl) for epl in s.split(',')],
         help="Length of subpeptides (neoepitopes) to predict. "
              + "Multiple epitope lengths can be specified using a comma-separated list. "
-             + "Typical epitope lengths vary between 8-11. " 
+             + "Typical epitope lengths vary between 8-11. "
              + "Required for Class I prediction algorithms",
     )
     parser.add_argument(
