@@ -5,6 +5,10 @@ before_install:
   - pip install PyVCF
   - pip install requests
   - pip install PyYAML
+  - pip install biopython
+  - pip install networkx
+  - pip install pandas
+  - pip install simanneal
 install: true
 script:
   - python3 -m unittest discover -v

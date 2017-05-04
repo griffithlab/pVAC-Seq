@@ -41,7 +41,11 @@ setup(
         'PyVCF',
         'requests',
         'PyYAML',
-        'connexion'
+        'connexion',
+        'networkx',
+        'pandas',
+        'simanneal',
+        'biopython'
     ],
     package_data={
         'pvacseq' : data_files,
